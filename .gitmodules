@@ -1,0 +1,3 @@
+[submodule "mas-ai-agent-v5"]
+	path = mas-ai-agent-v5
+	url = https://github.com/JanWillemSteur65/mas-ai-agent-v5.git

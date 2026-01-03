@@ -1,0 +1,181 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: maximo-ai-agent
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: maximo-ai-agent-data
+  namespace: maximo-ai-agent
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+  volumeMode: Filesystem
+  # Update storageClassName if your cluster uses a different class
+  storageClassName: managed-nfs-storage
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  namespace: maximo-ai-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maximo-ai-agent
+      component: app
+  template:
+    metadata:
+      labels:
+        app: maximo-ai-agent
+        component: app
+    spec:
+      containers:
+        - name: app
+          image: image-registry.openshift-image-registry.svc:5000/maximo-ai-agent/app:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            # IMPORTANT: set a strong value in your Deployment (or inject from a Secret)
+            - name: AUTH_SECRET
+              value: "change-me-in-prod"
+            # Optional: set this only on first start; afterwards /data/users.json persists
+            - name: DEFAULT_ADMIN_PASSWORD
+              value: "ReAtEt-wAInve-M0UsER"
+            # If your Route terminates TLS (edge), cookies are still served over HTTPS to the browser.
+            # Set COOKIE_SECURE=true to add Secure cookies.
+            - name: COOKIE_SECURE
+              value: "true"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: maximo-ai-agent-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  namespace: maximo-ai-agent
+spec:
+  selector:
+    app: maximo-ai-agent
+    component: app
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: app
+  namespace: maximo-ai-agent
+spec:
+  to:
+    kind: Service
+    name: app
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-server
+  namespace: maximo-ai-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maximo-ai-agent
+      component: mcp-server
+  template:
+    metadata:
+      labels:
+        app: maximo-ai-agent
+        component: mcp-server
+    spec:
+      containers:
+        - name: mcp-server
+          image: image-registry.openshift-image-registry.svc:5000/maximo-ai-agent/mcp-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+              name: http
+          env:
+            - name: AUTH_SECRET
+              value: "change-me-in-prod"
+            - name: DEFAULT_ADMIN_PASSWORD
+              value: "ReAtEt-wAInve-M0UsER"
+            - name: COOKIE_SECURE
+              value: "true"
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: maximo-ai-agent-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-server
+  namespace: maximo-ai-agent
+spec:
+  selector:
+    app: maximo-ai-agent
+    component: mcp-server
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: mcp-server
+  namespace: maximo-ai-agent
+spec:
+  to:
+    kind: Service
+    name: mcp-server
+  port:
+    targetPort: http
+  tls:
+    termination: edge
