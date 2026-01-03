@@ -1649,43 +1649,43 @@ app.post("/mcp/call", async (req, res) => {
       const OS_DEFAULTS = {
         mxapiasset: {
           select: "assetnum,description,status,siteid,orgid,location,assettype,serialnum,priority,changedate",
-          pageSize: "50",
+          pageSize: "200",
         },
         mxapilocations: {
           select: "location,description,status,siteid,orgid,parent,loctype,type,changedate",
-          pageSize: "50",
+          pageSize: "200",
         },
         mxapiwo: {
           select: "wonum,description,status,worktype,priority,siteid,orgid,assetnum,location,reportdate,targstartdate,targcompdate,changedate",
-          pageSize: "50",
+          pageSize: "200",
         },
         mxapisr: {
           select: "ticketid,description,status,class,priority,siteid,orgid,assetnum,location,reportedby,reportdate,changedate",
-          pageSize: "50",
+          pageSize: "200",
         },
         mxapipm: {
           select: "pmnum,description,status,siteid,orgid,location,assetnum,freq,frequency,worktype,nextdate,changedate",
-          pageSize: "50",
+          pageSize: "200",
         },
         mxapijobplan: {
           select: "jpnum,description,status,siteid,orgid,pluscrevnum,changedate",
-          pageSize: "50",
+          pageSize: "200",
         },
         mxapiinspectionres: {
           select: "inspectionresultid,inspectionformnum,status,siteid,orgid,assetnum,location,createdate,changedate",
-          pageSize: "50",
+          pageSize: "200",
         },
         mxapipr: {
           select: "prnum,description,status,siteid,orgid,requestor,prdate,totalcost,changedate",
-          pageSize: "50",
+          pageSize: "200",
         },
         mxapipo: {
           select: "ponum,description,status,siteid,orgid,vendor,orderdate,totalcost,changedate",
-          pageSize: "50",
+          pageSize: "200",
         },
         mxapiinventory: {
           select: "itemnum,item.description,status,issueunit,location,invbalances.curbal,changedate",
-          pageSize: "25",
+          pageSize: "200",
         },
       };
 
@@ -1757,7 +1757,7 @@ app.post("/mcp/call", async (req, res) => {
     if (name === "maximo_listAssets") {
       const site = String(args?.site || "").trim().toUpperCase();
       const search = String(args?.search || "").trim().toLowerCase();
-      const pageSize = Number(args?.pageSize || 100);
+      const pageSize = Number(args?.pageSize || 200);
       if (!site) return res.status(400).json({ error: "bad_request", detail: "args.site is required" });
 
       // Reuse the queryOS path for a safe value list.
