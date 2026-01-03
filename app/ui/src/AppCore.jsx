@@ -75,6 +75,37 @@ function resolveAvatarSrc(input) {
   }
 }
 
+// Small helper used across the UI when endpoints return JSON as a string.
+// (e.g., some MCP responses wrap tool output in content[0].text)
+function safeJsonParse(text) {
+  if (text == null) return null
+  const s0 = String(text).trim()
+  if (!s0) return null
+  // 1) plain JSON
+  try { return JSON.parse(s0) } catch {}
+
+  // 2) JSON wrapped in markdown code fences
+  const unfenced = s0.replace(/^```[a-zA-Z0-9_-]*\s*/,'').replace(/\s*```$/,'').trim()
+  if (unfenced && unfenced !== s0) {
+    try { return JSON.parse(unfenced) } catch {}
+  }
+
+  // 3) best-effort extraction of first JSON object/array substring
+  const firstObj = s0.indexOf('{')
+  const lastObj = s0.lastIndexOf('}')
+  if (firstObj >= 0 && lastObj > firstObj) {
+    const sub = s0.slice(firstObj, lastObj + 1)
+    try { return JSON.parse(sub) } catch {}
+  }
+  const firstArr = s0.indexOf('[')
+  const lastArr = s0.lastIndexOf(']')
+  if (firstArr >= 0 && lastArr > firstArr) {
+    const sub = s0.slice(firstArr, lastArr + 1)
+    try { return JSON.parse(sub) } catch {}
+  }
+  return null
+}
+
 const PROVIDERS = [
   { id:'openai', label:'OpenAI' },
   { id:'anthropic', label:'Anthropic' },
